@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KS - Usuários</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,sans-serif}
+body{min-height:100vh;background:#1A3B4C;color:#fff}
+.header{background:rgba(0,0,0,0.15);backdrop-filter:blur(4px);padding:16px 24px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,0.1)}
+.header .esq{display:flex;align-items:center;gap:12px}
+.header .esq img{height:50px;width:auto}
+.header .esq a{color:#fff;text-decoration:none;font-size:18px;font-weight:600}
+.btn-voltar{background:transparent;color:#fff;border:1px solid #800020;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:14px;transition:.2s}
+.btn-voltar:hover{background:#800020}
+.container{padding:32px 24px;max-width:1000px;margin:0 auto}
+h1{color:#fff;margin-bottom:24px;font-size:26px}
+.card{background:#fff;border-radius:12px;padding:24px;margin-bottom:24px;color:#333}
+.card h2{color:#800020;margin-bottom:12px;font-size:18px}
+.form-group{display:flex;flex-direction:column;margin-bottom:14px}
+.form-group label{font-weight:600;margin-bottom:4px;font-size:14px}
+.form-group input,.form-group select{padding:10px 14px;border:2px solid #ddd;border-radius:8px;font-size:14px;outline:none;transition:border-color .3s}
+.form-group input:focus,.form-group select:focus{border-color:#800020}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.btn{background:#800020;color:#fff;border:none;padding:10px 24px;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px;transition:.2s}
+.btn:hover{background:#a00028}
+.btn-cancelar{background:#ddd;color:#333}
+.btn-cancelar:hover{background:#ccc}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;color:#333;margin-top:20px}
+th{background:#800020;color:#fff;padding:12px 16px;text-align:left;font-size:14px}
+td{padding:12px 16px;border-bottom:1px solid #eee;font-size:14px}
+.acoes{display:flex;gap:8px}
+.btn-editar{background:#0066cc;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px}
+.btn-excluir{background:#cc0000;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px}
+.sem-registros{text-align:center;padding:32px;color:#999}
+</style>
+</head>
+<body>
+<div class="header">
+<div class="esq"><img src="/logo.webp" alt="Logo KS"><a href="dashboard.html">AGÊNCIA KS</a></div>
+<button class="btn-voltar" onclick="window.location.href='dashboard.html'">Voltar ao Dashboard</button>
+</div>
+<div class="container">
+<h1>Usuários</h1>
+<div class="card">
+<h2 id="formTitle">Novo Usuário</h2>
+<form id="usuarioForm">
+<input type="hidden" id="usuarioId">
+<div class="form-row">
+<div class="form-group"><label for="nome">Nome</label><input type="text" id="nome" required></div>
+<div class="form-group"><label for="email">E-mail</label><input type="email" id="email" required></div>
+</div>
+<div class="form-row">
+<div class="form-group"><label for="senha">Senha</label><input type="password" id="senha" placeholder="Deixe em branco para manter"></div>
+<div class="form-group"><label for="tipo">Tipo</label>
+<select id="tipo"><option value="operador">Operador</option><option value="gestor">Gestor</option></select></div>
+</div>
+<div class="form-actions" style="display:flex;gap:12px;justify-content:flex-end">
+<button type="button" class="btn btn-cancelar" id="btnCancelar" style="display:none">Cancelar</button>
+<button type="submit" class="btn">Salvar</button>
+</div>
+</form>
+</div>
+<table>
+<thead><tr><th>Nome</th><th>E-mail</th><th>Tipo</th><th>Ações</th></tr></thead>
+<tbody id="tabelaUsuarios"></tbody>
+</table>
+</div>
+<script>
+const token=localStorage.getItem('token');if(!token)window.location.href='login.html';
+const api='/usuarios';
+async function carregarUsuarios(){try{const r=await fetch(api,{headers:{'Authorization':'Bearer '+token}});const usuarios=await r.json();const tbody=document.getElementById('tabelaUsuarios');tbody.innerHTML='';if(!usuarios.length){tbody.innerHTML='<tr><td colspan="4" class="sem-registros">Nenhum usuário cadastrado</td></tr>';return}
+usuarios.forEach(u=>{tbody.innerHTML+=`<tr><td>${u.nome}</td><td>${u.email}</td><td>${u.tipo}</td>
+<td class="acoes"><button class="btn-editar" onclick="editarUsuario(${u.id},'${u.nome.replace(/'/g,"\\'")}','${u.email.replace(/'/g,"\\'")}','${u.tipo}')">Editar</button><button class="btn-excluir" onclick="excluirUsuario(${u.id})">Excluir</button></td></tr>`})}catch(e){alert('Erro ao carregar usuários')}}
+document.getElementById('usuarioForm').addEventListener('submit',async e=>{e.preventDefault();const id=document.getElementById('usuarioId').value;const dados={nome:document.getElementById('nome').value,email:document.getElementById('email').value,tipo:document.getElementById('tipo').value};const senha=document.getElementById('senha').value;if(senha)dados.senha=senha;try{let url=api;let metodo='POST';if(id){url+='/'+id;metodo='PUT'}
+const r=await fetch(url,{method:metodo,headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify(dados)});if(r.ok){resetarForm();carregarUsuarios()}else{alert('Erro ao salvar')}}catch(e){alert('Erro ao salvar')}});
+function editarUsuario(id,nome,email,tipo){document.getElementById('formTitle').textContent='Editar Usuário';document.getElementById('usuarioId').value=id;document.getElementById('nome').value=nome;document.getElementById('email').value=email;document.getElementById('tipo').value=tipo;document.getElementById('senha').placeholder='Nova senha (opcional)';document.getElementById('btnCancelar').style.display='inline-block';}
+document.getElementById('btnCancelar').addEventListener('click',resetarForm);
+function resetarForm(){document.getElementById('formTitle').textContent='Novo Usuário';document.getElementById('usuarioId').value='';document.getElementById('usuarioForm').reset();document.getElementById('senha').placeholder='Deixe em branco para manter';document.getElementById('btnCancelar').style.display='none';}
+async function excluirUsuario(id){if(!confirm('Excluir usuário?'))return;try{const r=await fetch(api+'/'+id,{method:'DELETE',headers:{'Authorization':'Bearer '+token}});if(r.ok)carregarUsuarios();else alert('Erro ao excluir')}catch(e){alert('Erro ao excluir')}}
+carregarUsuarios();
+</script>
+</body>
+</html>

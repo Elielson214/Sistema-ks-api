@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KS - Dashboard</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,sans-serif}
+body{min-height:100vh;background:#1A3B4C;display:flex;flex-direction:column}
+.header{background:rgba(0,0,0,0.15);backdrop-filter:blur(4px);padding:16px 24px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,0.1)}
+.header .esq{display:flex;align-items:center;gap:12px}
+.header .esq img{height:50px;width:auto}
+.header .esq h1{color:#fff;font-size:22px;font-weight:700;letter-spacing:1px}
+.header .dir{display:flex;align-items:center;gap:16px;color:#ddd;font-size:14px}
+.btn-sair{background:#800020;color:#fff;border:none;padding:8px 20px;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px;transition:.2s}
+.btn-sair:hover{background:#a00028}
+.container{flex:1;padding:32px 24px;max-width:1100px;margin:0 auto;width:100%}
+.menu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:16px;margin-bottom:32px}
+.menu-item{background:#fff;border-radius:12px;padding:24px 12px;text-align:center;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.15);text-decoration:none;display:block;transition:.3s;border:2px solid transparent}
+.menu-item:hover{border-color:#800020;transform:translateY(-3px)}
+.menu-item .icon{height:100px;display:flex;align-items:center;justify-content:center;margin-bottom:8px}
+.menu-item .icon img{width:100px;height:100px;object-fit:contain;display:block}
+.menu-item h3{color:#800020;font-size:16px;font-weight:700;margin-bottom:2px}
+.menu-item p{color:#666;font-size:12px}
+.cards-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px}
+.card{background:#fff;border-radius:12px;padding:20px;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,0.1)}
+.card .numero{color:#800020;font-size:28px;font-weight:800}
+.card .rotulo{color:#555;font-size:13px;margin-top:4px}
+.hidden{display:none!important}
+@media(max-width:600px){.header{flex-wrap:wrap;gap:8px;padding:12px}.container{padding:16px}}
+</style>
+</head>
+<body>
+<div class="header">
+<div class="esq"><img src="/logo.webp" alt="Logo KS"><h1>AGÊNCIA KS</h1></div>
+<div class="dir"><span id="userName"></span><span id="userTipo" style="opacity:.7"></span><button class="btn-sair" onclick="sair()">Sair</button></div>
+</div>
+<div class="container">
+<div class="menu-grid">
+<a href="contatos.html" class="menu-item"><span class="icon"><img src="/contato.webp" alt="Contatos"></span><h3>Contatos</h3><p>Gerenciar contatos</p></a>
+<a href="campanhas.html" class="menu-item"><span class="icon"><img src="/campanha.webp" alt="Campanhas"></span><h3>Campanhas</h3><p>Gerenciar campanhas</p></a>
+<a href="discadora.html" class="menu-item"><span class="icon"><img src="/discadora.webp" alt="Discadora"></span><h3>Discadora</h3><p>Painel de discagem</p></a>
+<a href="ura.html" class="menu-item"><span class="icon"><img src="/ura.webp" alt="URA"></span><h3>URA</h3><p>URA reversa</p></a>
+<a href="whatsapp.html" class="menu-item"><span class="icon"><img src="/gestor.webp" alt="WhatsApp"></span><h3>WhatsApp</h3><p>Gestor de mensagens</p></a>
+<a href="followup.html" class="menu-item"><span class="icon">📅</span><h3>Follow-up</h3><p>Agenda e histórico</p></a>
+<a href="usuarios.html" class="menu-item hidden" id="menuUsuarios"><span class="icon"><img src="/usuário.webp" alt="Usuários"></span><h3>Usuários</h3><p>Gerenciar usuários</p></a>
+<a href="relatorios.html" class="menu-item"><span class="icon"><img src="/relatório.webp" alt="Relatórios"></span><h3>Relatórios</h3><p>Indicadores</p></a>
+<a href="configuracoes.html" class="menu-item"><span class="icon"><img src="/configurações.webp" alt="Configurações"></span><h3>Configurações</h3><p>Ajustes do sistema</p></a>
+</div>
+<div class="cards-row">
+<div class="card"><div class="numero" id="totalContatos">0</div><div class="rotulo">Total de Contatos</div></div>
+<div class="card"><div class="numero" id="totalCampanhas">0</div><div class="rotulo">Campanhas Ativas</div></div>
+<div class="card"><div class="numero" id="totalDiscagens">0</div><div class="rotulo">Discagens Hoje</div></div>
+<div class="card"><div class="numero" id="totalFollowups">0</div><div class="rotulo">Follow-ups Pendentes</div></div>
+</div>
+</div>
+<script>
+const token=localStorage.getItem('token');
+if(!token)window.location.href='login.html';
+const usuario=JSON.parse(localStorage.getItem('usuario')||'{}');
+document.getElementById('userName').textContent=usuario.nome||'Usuário';
+document.getElementById('userTipo').textContent='('+(usuario.tipo||'operador')+')';
+if(usuario.tipo==='gestor')document.getElementById('menuUsuarios').classList.remove('hidden');
+async function carregarIndicadores(){
+try{
+const r1=await fetch('/contatos',{headers:{'Authorization':'Bearer '+token}});const c=await r1.json();document.getElementById('totalContatos').textContent=c.length;
+const r2=await fetch('/campanhas',{headers:{'Authorization':'Bearer '+token}});const ca=await r2.json();document.getElementById('totalCampanhas').textContent=ca.filter(x=>x.tipo==='ativa').length;
+const r3=await fetch('/discagens',{headers:{'Authorization':'Bearer '+token}});const d=await r3.json();const hoje=new Date().toISOString().split('T')[0];document.getElementById('totalDiscagens').textContent=d.filter(x=>x.criado_em&&x.criado_em.startsWith(hoje)).length;
+const r4=await fetch('/followups',{headers:{'Authorization':'Bearer '+token}});const f=await r4.json();document.getElementById('totalFollowups').textContent=f.filter(x=>x.status==='pendente').length;
+}catch(e){console.error('Erro indicadores',e)}
+}
+carregarIndicadores();
+function sair(){localStorage.clear();window.location.href='login.html'}
+</script>
+</body>
+</html>

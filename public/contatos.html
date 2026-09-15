@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KS - Contatos</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,sans-serif}
+body{min-height:100vh;background:#1A3B4C;color:#fff}
+.header{background:rgba(0,0,0,0.15);backdrop-filter:blur(4px);padding:16px 24px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,0.1)}
+.header .esq{display:flex;align-items:center;gap:12px}
+.header .esq img{height:50px;width:auto}
+.header .esq a{color:#fff;text-decoration:none;font-size:18px;font-weight:600}
+.btn-voltar{background:transparent;color:#fff;border:1px solid #800020;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:14px;transition:.2s}
+.btn-voltar:hover{background:#800020}
+.container{padding:32px 24px;max-width:1000px;margin:0 auto}
+h1{color:#fff;margin-bottom:24px;font-size:26px}
+.form-card{background:#fff;border-radius:12px;padding:24px;margin-bottom:24px;color:#333}
+.form-card h2{color:#800020;margin-bottom:16px;font-size:18px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.form-group{display:flex;flex-direction:column}
+.form-group label{font-weight:600;margin-bottom:4px;font-size:14px}
+.form-group input,.form-group textarea{padding:10px 14px;border:2px solid #ddd;border-radius:8px;font-size:14px;outline:none;transition:border-color .3s}
+.form-group input:focus,.form-group textarea:focus{border-color:#800020}
+.form-group textarea{resize:vertical;min-height:60px}
+.form-actions{display:flex;gap:12px;justify-content:flex-end}
+.btn{background:#800020;color:#fff;border:none;padding:10px 24px;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px;transition:.2s}
+.btn:hover{background:#a00028}
+.btn-cancelar{background:#ddd;color:#333}
+.btn-cancelar:hover{background:#ccc}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;color:#333}
+th{background:#800020;color:#fff;padding:12px 16px;text-align:left;font-size:14px}
+td{padding:12px 16px;border-bottom:1px solid #eee;font-size:14px}
+tr:last-child td{border-bottom:none}
+tr:hover{background:#f9f9f9}
+.acoes{display:flex;gap:8px}
+.btn-editar{background:#0066cc;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px}
+.btn-excluir{background:#cc0000;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px}
+.btn-editar:hover{background:#0052a3}
+.btn-excluir:hover{background:#a30000}
+.sem-registros{text-align:center;padding:32px;color:#999}
+@media(max-width:600px){.form-row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="header">
+<div class="esq"><img src="/logo.webp" alt="Logo KS"><a href="dashboard.html">AGÊNCIA KS</a></div>
+<button class="btn-voltar" onclick="window.location.href='dashboard.html'">Voltar ao Dashboard</button>
+</div>
+<div class="container">
+<h1>Gerenciar Contatos</h1>
+<div class="form-card">
+<h2 id="formTitle">Novo Contato</h2>
+<form id="contatoForm">
+<input type="hidden" id="contatoId">
+<div class="form-row">
+<div class="form-group"><label for="nome">Nome</label><input type="text" id="nome" required></div>
+<div class="form-group"><label for="telefone">Telefone</label><input type="text" id="telefone" required placeholder="(11) 99999-9999"></div>
+</div>
+<div class="form-row">
+<div class="form-group"><label for="email">Email</label><input type="email" id="email"></div>
+<div class="form-group"><label for="status">Status</label><input type="text" id="status" value="ativo" placeholder="ativo / inativo"></div>
+</div>
+<div class="form-group"><label for="observacao">Observação</label><textarea id="observacao" rows="2"></textarea></div>
+<div class="form-actions">
+<button type="button" class="btn btn-cancelar" id="btnCancelar" style="display:none">Cancelar</button>
+<button type="submit" class="btn">Salvar Contato</button>
+</div>
+</form>
+</div>
+<table>
+<thead><tr><th>Nome</th><th>Telefone</th><th>Email</th><th>Status</th><th>Ações</th></tr></thead>
+<tbody id="tabelaContatos"></tbody>
+</table>
+</div>
+<script>
+const token=localStorage.getItem('token');
+if(!token)window.location.href='login.html';
+const api='/contatos';
+let editando=false;
+async function carregarContatos(){
+try{const r=await fetch(api,{headers:{'Authorization':'Bearer '+token}});const contatos=await r.json();const tbody=document.getElementById('tabelaContatos');tbody.innerHTML='';if(contatos.length===0){tbody.innerHTML='<tr><td colspan="5" class="sem-registros">Nenhum contato cadastrado</td></tr>';return}
+contatos.forEach(c=>{tbody.innerHTML+=`
+<tr><td>${c.nome}</td><td>${c.telefone}</td><td>${c.email||'-'}</td><td>${c.status}</td>
+<td class="acoes"><button class="btn-editar" onclick="editarContato(${c.id},'${c.nome.replace(/'/g,"\\'")}','${c.telefone}','${c.email||''}','${c.observacao||''}','${c.status}')">Editar</button><button class="btn-excluir" onclick="excluirContato(${c.id})">Excluir</button></td></tr>`})}catch(e){alert('Erro ao carregar contatos')}}
+document.getElementById('contatoForm').addEventListener('submit',async e=>{e.preventDefault();const id=document.getElementById('contatoId').value;const dados={nome:document.getElementById('nome').value,telefone:document.getElementById('telefone').value,email:document.getElementById('email').value,observacao:document.getElementById('observacao').value,status:document.getElementById('status').value};try{let url=api;let metodo='POST';if(id){url+='/'+id;metodo='PUT'}
+const r=await fetch(url,{method:metodo,headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify(dados)});if(r.ok){resetarForm();carregarContatos()}else{const err=await r.json();alert(err.error||'Erro ao salvar')}}catch(e){alert('Erro ao salvar contato')}});
+function editarContato(id,nome,telefone,email,observacao,status){editando=true;document.getElementById('formTitle').textContent='Editar Contato';document.getElementById('contatoId').value=id;document.getElementById('nome').value=nome;document.getElementById('telefone').value=telefone;document.getElementById('email').value=email;document.getElementById('observacao').value=observacao;document.getElementById('status').value=status;document.getElementById('btnCancelar').style.display='inline-block'}
+document.getElementById('btnCancelar').addEventListener('click',resetarForm);
+function resetarForm(){editando=false;document.getElementById('formTitle').textContent='Novo Contato';document.getElementById('contatoId').value='';document.getElementById('contatoForm').reset();document.getElementById('status').value='ativo';document.getElementById('btnCancelar').style.display='none'}
+async function excluirContato(id){if(!confirm('Tem certeza que deseja excluir este contato?'))return;try{const r=await fetch(api+'/'+id,{method:'DELETE',headers:{'Authorization':'Bearer '+token}});if(r.ok)carregarContatos();else alert('Erro ao excluir')}catch(e){alert('Erro ao excluir contato')}}
+carregarContatos();
+</script>
+</body>
+</html>

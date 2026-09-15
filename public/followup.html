@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KS - Follow-up</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,sans-serif}
+body{min-height:100vh;background:#1A3B4C;color:#fff}
+.header{background:rgba(0,0,0,0.15);backdrop-filter:blur(4px);padding:16px 24px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,0.1)}
+.header .esq{display:flex;align-items:center;gap:12px}
+.header .esq img{height:50px;width:auto}
+.header .esq a{color:#fff;text-decoration:none;font-size:18px;font-weight:600}
+.btn-voltar{background:transparent;color:#fff;border:1px solid #800020;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:14px;transition:.2s}
+.btn-voltar:hover{background:#800020}
+.container{padding:32px 24px;max-width:1000px;margin:0 auto}
+h1{color:#fff;margin-bottom:24px;font-size:26px}
+.card{background:#fff;border-radius:12px;padding:24px;margin-bottom:24px;color:#333}
+.card h2{color:#800020;margin-bottom:12px;font-size:18px}
+.form-group{display:flex;flex-direction:column;margin-bottom:14px}
+.form-group label{font-weight:600;margin-bottom:4px;font-size:14px}
+.form-group input,.form-group textarea,.form-group select{padding:10px 14px;border:2px solid #ddd;border-radius:8px;font-size:14px;outline:none;transition:border-color .3s}
+.form-group input:focus,.form-group textarea:focus,.form-group select:focus{border-color:#800020}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.btn{background:#800020;color:#fff;border:none;padding:10px 24px;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px;transition:.2s}
+.btn:hover{background:#a00028}
+.btn-cancelar{background:#ddd;color:#333}
+.btn-cancelar:hover{background:#ccc}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;color:#333;margin-top:20px}
+th{background:#800020;color:#fff;padding:12px 16px;text-align:left;font-size:14px}
+td{padding:12px 16px;border-bottom:1px solid #eee;font-size:14px}
+.acoes{display:flex;gap:8px}
+.btn-editar{background:#0066cc;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px}
+.btn-excluir{background:#cc0000;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px}
+.sem-registros{text-align:center;padding:32px;color:#999}
+</style>
+</head>
+<body>
+<div class="header">
+<div class="esq"><img src="/logo.webp" alt="Logo KS"><a href="dashboard.html">AGÊNCIA KS</a></div>
+<button class="btn-voltar" onclick="window.location.href='dashboard.html'">Voltar ao Dashboard</button>
+</div>
+<div class="container">
+<h1>Follow-up</h1>
+<div class="card">
+<h2 id="formTitle">Novo Follow-up</h2>
+<form id="followupForm">
+<input type="hidden" id="followupId">
+<div class="form-group"><label for="contato">Contato</label><select id="contato" required></select></div>
+<div class="form-group"><label for="tipo">Tipo</label>
+<select id="tipo"><option value="agendado">Agendado</option><option value="pendente">Pendente</option><option value="concluido">Concluído</option></select></div>
+<div class="form-group"><label for="data">Data</label><input type="datetime-local" id="data" required></div>
+<div class="form-group"><label for="observacao">Observação</label><textarea id="observacao" rows="3"></textarea></div>
+<div class="form-actions" style="display:flex;gap:12px;justify-content:flex-end">
+<button type="button" class="btn btn-cancelar" id="btnCancelar" style="display:none">Cancelar</button>
+<button type="submit" class="btn">Salvar</button>
+</div>
+</form>
+</div>
+<table>
+<thead><tr><th>Contato</th><th>Tipo</th><th>Data</th><th>Observação</th><th>Ações</th></tr></thead>
+<tbody id="tabelaFollowups"></tbody>
+</table>
+</div>
+<script>
+const token=localStorage.getItem('token');if(!token)window.location.href='login.html';
+const api='/followups';
+async function carregarContatos(){try{const r=await fetch('/contatos',{headers:{'Authorization':'Bearer '+token}});const c=await r.json();const sel=document.getElementById('contato');c.forEach(ct=>{sel.innerHTML+=`<option value="${ct.id}">${ct.nome||ct.telefone}</option>`})}catch(e){}}
+async function carregarFollowups(){try{const r=await fetch(api,{headers:{'Authorization':'Bearer '+token}});const flw=await r.json();const tbody=document.getElementById('tabelaFollowups');tbody.innerHTML='';if(!flw.length){tbody.innerHTML='<tr><td colspan="5" class="sem-registros">Nenhum follow-up registrado</td></tr>';return}
+flw.forEach(f=>{tbody.innerHTML+=`<tr><td>${f.contato_nome||f.telefone}</td><td>${f.tipo}</td><td>${f.data}</td><td>${f.observacao||'-'}</td>
+<td class="acoes"><button class="btn-editar" onclick="editarFollowup(${f.id},${f.contato_id},'${f.tipo}','${f.data}','${(f.observacao||'').replace(/'/g,"\\'")}')">Editar</button><button class="btn-excluir" onclick="excluirFollowup(${f.id})">Excluir</button></td></tr>`})}catch(e){}}
+document.getElementById('followupForm').addEventListener('submit',async e=>{e.preventDefault();const id=document.getElementById('followupId').value;const dados={contato_id:document.getElementById('contato').value,tipo:document.getElementById('tipo').value,data:document.getElementById('data').value,observacao:document.getElementById('observacao').value};try{let url=api;let metodo='POST';if(id){url+='/'+id;metodo='PUT'}
+const r=await fetch(url,{method:metodo,headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify(dados)});if(r.ok){resetarForm();carregarFollowups()}else{alert('Erro ao salvar')}}catch(e){alert('Erro ao salvar')}});
+function editarFollowup(id,contato_id,tipo,data,observacao){document.getElementById('formTitle').textContent='Editar Follow-up';document.getElementById('followupId').value=id;document.getElementById('contato').value=contato_id;document.getElementById('tipo').value=tipo;document.getElementById('data').value=data;document.getElementById('observacao').value=observacao;document.getElementById('btnCancelar').style.display='inline-block'}
+document.getElementById('btnCancelar').addEventListener('click',resetarForm);
+function resetarForm(){document.getElementById('formTitle').textContent='Novo Follow-up';document.getElementById('followupId').value='';document.getElementById('followupForm').reset();document.getElementById('btnCancelar').style.display='none'}
+async function excluirFollowup(id){if(!confirm('Excluir follow-up?'))return;try{const r=await fetch(api+'/'+id,{method:'DELETE',headers:{'Authorization':'Bearer '+token}});if(r.ok)carregarFollowups();else alert('Erro ao excluir')}catch(e){alert('Erro ao excluir')}}
+carregarContatos();carregarFollowups();
+</script>
+</body>
+</html>

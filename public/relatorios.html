@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KS - Relatórios</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,sans-serif}
+body{min-height:100vh;background:#1A3B4C;color:#fff}
+.header{background:rgba(0,0,0,0.15);backdrop-filter:blur(4px);padding:16px 24px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,0.1)}
+.header .esq{display:flex;align-items:center;gap:12px}
+.header .esq img{height:50px;width:auto}
+.header .esq a{color:#fff;text-decoration:none;font-size:18px;font-weight:600}
+.btn-voltar{background:transparent;color:#fff;border:1px solid #800020;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:14px;transition:.2s}
+.btn-voltar:hover{background:#800020}
+.container{padding:32px 24px;max-width:1000px;margin:0 auto}
+h1{color:#fff;margin-bottom:24px;font-size:26px}
+.card{background:#fff;border-radius:12px;padding:24px;margin-bottom:24px;color:#333}
+.card h2{color:#800020;margin-bottom:12px;font-size:18px}
+.form-group{display:flex;flex-direction:column;margin-bottom:14px}
+.form-group label{font-weight:600;margin-bottom:4px;font-size:14px}
+.form-group input,.form-group select{padding:10px 14px;border:2px solid #ddd;border-radius:8px;font-size:14px;outline:none;transition:border-color .3s}
+.form-group input:focus,.form-group select:focus{border-color:#800020}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.btn{background:#800020;color:#fff;border:none;padding:10px 24px;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px;transition:.2s}
+.btn:hover{background:#a00028}
+</style>
+</head>
+<body>
+<div class="header">
+<div class="esq"><img src="/logo.webp" alt="Logo KS"><a href="dashboard.html">AGÊNCIA KS</a></div>
+<button class="btn-voltar" onclick="window.location.href='dashboard.html'">Voltar ao Dashboard</button>
+</div>
+<div class="container">
+<h1>Relatórios</h1>
+<div class="card">
+<h2>Filtrar Relatório</h2>
+<form id="relatorioForm">
+<div class="form-row">
+<div class="form-group"><label for="tipo">Tipo</label>
+<select id="tipo"><option value="geral">Geral</option><option value="chamadas">Chamadas</option><option value="whatsapp">WhatsApp</option><option value="followup">Follow-up</option></select></div>
+<div class="form-group"><label for="periodo">Período</label>
+<select id="periodo"><option value="hoje">Hoje</option><option value="7d">Últimos 7 dias</option><option value="30d">Últimos 30 dias</option><option value="personalizado">Personalizado</option></select></div>
+</div>
+<div class="form-row" id="datasPersonalizadas" style="display:none">
+<div class="form-group"><label for="dataInicio">Data Início</label><input type="date" id="dataInicio"></div>
+<div class="form-group"><label for="dataFim">Data Fim</label><input type="date" id="dataFim"></div>
+</div>
+<button type="submit" class="btn">Gerar Relatório</button>
+</form>
+</div>
+<div id="resultadoRelatorio"></div>
+</div>
+<script>
+const token=localStorage.getItem('token');if(!token)window.location.href='login.html';
+document.getElementById('periodo').addEventListener('change',function(){document.getElementById('datasPersonalizadas').style.display=this.value==='personalizado'?'grid':'none'});
+document.getElementById('relatorioForm').addEventListener('submit',async e=>{e.preventDefault();const tipo=document.getElementById('tipo').value;let url=`/relatorios/${tipo}`;const periodo=document.getElementById('periodo').value;if(periodo==='personalizado'){const di=document.getElementById('dataInicio').value;const df=document.getElementById('dataFim').value;if(di&&df)url+=`?inicio=${di}&fim=${df}`}else if(periodo!=='geral'){const hoje=new Date();let dias=periodo==='hoje'?0:periodo==='7d'?7:30;const inicio=new Date(hoje);inicio.setDate(inicio.getDate()-dias);url+=`?inicio=${inicio.toISOString().split('T')[0]}&fim=${hoje.toISOString().split('T')[0]}`}
+try{const r=await fetch(url,{headers:{'Authorization':'Bearer '+token}});const dados=await r.json();document.getElementById('resultadoRelatorio').innerHTML=`<div class="card"><h2>Resultado - ${tipo}</h2><pre style="white-space:pre-wrap;font-size:14px">${JSON.stringify(dados,null,2)}</pre></div>`}catch(e){document.getElementById('resultadoRelatorio').innerHTML='<div class="card"><p style="color:#cc0000">Erro ao gerar relatório</p></div>'}});
+</script>
+</body>
+</html>

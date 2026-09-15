@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KS - Login</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,sans-serif}
+body{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#1A3B4C;padding:20px}
+.login-card{background:#fff;border-radius:16px;padding:48px 40px;max-width:420px;width:100%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.3)}
+.login-card .logo img{height:200px;margin-bottom:12px}
+.login-card h1{font-size:28px;color:#800020;text-transform:uppercase;letter-spacing:2px;margin-bottom:32px}
+.erro{background:#f8d7da;color:#721c24;padding:12px;border-radius:8px;margin-bottom:20px;display:none}
+.form-group{text-align:left;margin-bottom:20px}
+.form-group label{display:block;margin-bottom:6px;font-weight:600;color:#333}
+.form-group input{width:100%;padding:12px 16px;border:2px solid #ddd;border-radius:8px;font-size:16px;background:#f9f9f9;outline:none;transition:border-color .3s}
+.form-group input:focus{border-color:#800020}
+.btn-entrar{width:100%;padding:14px;background:#800020;color:#fff;border:none;border-radius:8px;font-size:18px;font-weight:700;cursor:pointer;transition:.2s}
+.btn-entrar:hover{background:#a00028}
+.cadastro-link{margin-top:20px;font-size:14px;color:#666}
+.cadastro-link a{color:#800020;font-weight:700;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="login-card">
+<div class="logo"><img src="/logo.webp" alt="Logo KS"></div>
+<h1>Agência ks</h1>
+<div class="erro" id="erroMsg"></div>
+<form id="loginForm">
+<div class="form-group"><label for="email">Email</label><input id="email" type="email" placeholder="seu@email.com" required></div>
+<div class="form-group"><label for="senha">Senha</label><input id="senha" type="password" placeholder="sua senha" required></div>
+<button type="submit" class="btn-entrar">Entrar</button>
+</form>
+<p class="cadastro-link">Nao tem conta? <a href="#">Cadastre-se</a></p>
+</div>
+<script>
+document.getElementById('loginForm').addEventListener('submit',async e=>{
+e.preventDefault();const email=document.getElementById('email').value;const senha=document.getElementById('senha').value;const erro=document.getElementById('erroMsg');erro.style.display='none';
+try{const res=await fetch('http://localhost:3000/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,senha})});const data=await res.json();if(res.ok){localStorage.setItem('token',data.token);localStorage.setItem('usuario',JSON.stringify(data.usuario));window.location.href='dashboard.html'}else{erro.textContent=data.error||'Erro ao fazer login';erro.style.display='block'}}catch(err){erro.textContent='Erro de conexão com o servidor';erro.style.display='block'}});
+</script>
+</body>
+</html>
