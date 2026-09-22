@@ -4,7 +4,7 @@
 "description": "Sistema de Gestao Agencia KS",
 "main": "server.js",
 "scripts": {
-"start": "./node_modules/.bin/prisma generate && ./node_modules/.bin/prisma db push && node server.js",
+"start": "node node_modules/prisma/build/index.js generate && node node_modules/prisma/build/index.js db push && node server.js",
 "dev": "node server.js"
 },
 "dependencies": {
