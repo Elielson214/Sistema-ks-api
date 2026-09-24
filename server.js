@@ -13,7 +13,7 @@ app.use(express.json());
 
 const JWT_SECRET = process.env.JWT_SECRET || 'segredo';
 
-// ========== LOGIN (já existente) ==========
+// ========== LOGIN ==========
 app.post('/api/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -24,7 +24,7 @@ app.post('/api/login', async (req, res) => {
     if (!user) {
       return res.status(400).json({ error: 'Email ou senha inválidos' });
     }
-    const validPassword = await bcrypt.compare(password, user.password);
+    const validPassword = await bcryptjs.compare(password, user.password);
     if (!validPassword) {
       return res.status(400).json({ error: 'Email ou senha inválidos' });
     }
@@ -47,7 +47,7 @@ app.post('/api/register', async (req, res) => {
     if (existingUser) {
       return res.status(400).json({ error: 'Email já cadastrado' });
     }
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcryptjs.hash(password, 10);
     const user = await prisma.user.create({
       data: { name, email, password: hashedPassword }
     });
@@ -87,7 +87,7 @@ app.post('/api/reset-password', async (req, res) => {
       return res.status(400).json({ error: 'Token e nova senha são obrigatórios' });
     }
     const decoded = jwt.verify(token, JWT_SECRET);
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const hashedPassword = await bcryptjs.hash(newPassword, 10);
     await prisma.user.update({
       where: { id: decoded.userId },
       data: { password: hashedPassword }
